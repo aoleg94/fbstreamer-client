@@ -20,7 +20,8 @@ struct MsgHeader
 {
     char sync[8];
     size_t length;
-} mh = { HEADER_SYNC, 0 };
+    int number, count;
+} mh = { HEADER_SYNC, 0, 0, 0 };
 
 int fd;
 int do_connect(const char* ip)

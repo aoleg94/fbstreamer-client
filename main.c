@@ -32,24 +32,31 @@ SDL_Texture* decode_frame(SDL_Renderer* rdr, void* data, int length, int* _width
                         &width, &height,
                         &jpegSubsamp, &jpegColorspace))
     {
-        fprintf(stderr, "decode_frame: failed to parse jpeg");
+        fprintf(stderr, "decode_frame: failed to parse jpeg\n");
         return NULL;
     }
     SDL_Texture* tex = alloc_texture(rdr, width, height);
-    void* pixels = NULL;
-    int pitch = -1;
-    if(SDL_LockTexture(tex, NULL, &pixels, &pitch))
+    static void* pixels = NULL;
+    int pitch = height*4;
+    if(!pixels)
+        pixels = malloc(width*height*4*2);
+    /*if(SDL_LockTexture(tex, NULL, &pixels, &pitch))
     {
-        fprintf(stderr, "decode_frame: failed to lock texture");
+        fprintf(stderr, "decode_frame: failed to lock texture\n");
         return NULL;
-    }
+    }*/
     if(tjDecompress2(tjd, (unsigned char*)data, (unsigned long)length, (unsigned char*)pixels,
                   width, pitch, height, TJPF_ARGB, 0))
     {
-        fprintf(stderr, "decode_frame: failed to decode jpeg");
+        fprintf(stderr, "decode_frame: failed to decode jpeg\n");
         return NULL;
     }
-    SDL_UnlockTexture(tex);
+    if(SDL_UpdateTexture(tex, NULL, pixels, pitch))
+    {
+        fprintf(stderr, "decode_frame: failed to update texture\n");
+        return NULL;
+    }
+    //SDL_UnlockTexture(tex);
     if(_width)
         *_width = width;
     if(_height)
